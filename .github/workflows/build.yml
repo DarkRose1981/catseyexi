@@ -99,7 +99,6 @@ jobs:
             topaz_connect_64.exe
             topaz_game_64.exe
             topaz_search_64.exe
-            libmariadb.dll
 
   MacOS_BigSur_11:
     # https://github.com/actions/virtual-environments/blob/main/images/macos/macos-11-Readme.md
@@ -488,39 +487,4 @@ jobs:
     - name: Startup checks
       shell: bash
       run: |
-        ./topaz_connect_64.exe --log login-server.log &
-        ./topaz_search_64.exe --log search-server.log &
-        ./topaz_game_64.exe --log map-server.log &
-
-        sleep 120
-    - name: Check for errors and warnings
-      shell: bash
-      if: ${{ success() || failure() }}
-      run: |
-        cat login-server*.log
-        cat map-server*.log
-        cat search-server*.log
-
-        if grep -qi "error" login-server*.log; then
-            exit -1
-        fi
-
-        if grep -qi "error" map-server*.log; then
-            exit -1
-        fi
-
-        if grep -qi "error" search-server*.log; then
-            exit -1
-        fi
-
-        if grep -qi "warning" login-server*.log; then
-            exit -1
-        fi
-
-        if grep -qi "warning" map-server*.log; then
-            exit -1
-        fi
-
-        if grep -qi "warning" search-server*.log; then
-            exit -1
-        fi
+        python3 ./tools/ci/startup_checks.py x64

@@ -206,7 +206,7 @@ int32 do_init(int32 argc, char** argv)
     {
         do_final(EXIT_FAILURE);
     }
-    Sql_Keepalive(SqlHandle);
+    Sql_Keepalive(SqlHandle, "MapKeepalive");
 
     // We clear the session table at server start (temporary solution)
     Sql_Query(SqlHandle, "DELETE FROM accounts_sessions WHERE IF(%u = 0 AND %u = 0, true, server_addr = %u AND server_port = %u);", map_ip.s_addr, map_port,
@@ -272,8 +272,6 @@ int32 do_init(int32 argc, char** argv)
     PTempBuff = new int8[map_config.buffer_size + 20];
 
     PacketGuard::Init();
-
-    luautils::EnableFilewatcher();
 
     ShowStatus("The map-server is ready to work...");
     ShowMessage("=======================================================================");
@@ -352,6 +350,8 @@ void set_server_type()
 
 int32 do_sockets(fd_set* rfd, duration next)
 {
+    message::handle_incoming();
+
     struct timeval timeout;
     int32          ret;
     memcpy(rfd, &readfds, sizeof(*rfd));
@@ -1572,6 +1572,9 @@ int32 map_config_read(const int8* cfgName)
 int32 map_garbage_collect(time_point tick, CTaskMgr::CTask* PTask)
 {
     TracyZoneScoped;
+
+    ShowInfo("CTaskMgr Active Tasks: %i", CTaskMgr::getInstance()->getTaskList().size());
+    
     luautils::garbageCollectStep();
     return 0;
 }
