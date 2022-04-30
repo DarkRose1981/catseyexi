@@ -35,7 +35,7 @@ CCharPacket::CCharPacket(CCharEntity* PChar, ENTITYUPDATE type, uint8 updatemask
     this->setSize(0x74);
 
     ref<uint32>(0x04) = PChar->id;
-    ref<uint16>(0x08) = PChar->targid;
+    ref<uint16>(0x08) = PChar->targid; // 0x0D entity updates are valid for 1024 to 1791
 
     switch (type)
     {
@@ -134,6 +134,12 @@ CCharPacket::CCharPacket(CCharEntity* PChar, ENTITYUPDATE type, uint8 updatemask
                 ref<uint8>(0x33) = 0x40;
             }
 
+            // Geomancer (GEO) Indi spell effect on the char.
+            if (PChar->StatusEffectContainer->HasStatusEffect(EFFECT_COLURE_ACTIVE))
+            {
+                ref<uint8>(0x42) = 0x50 + PChar->StatusEffectContainer->GetStatusEffect(EFFECT_COLURE_ACTIVE)->GetPower();
+            }
+
             ref<uint8>(0x43)  = 0x04;
 
             if (updatemask & UPDATE_LOOK)
@@ -159,7 +165,8 @@ CCharPacket::CCharPacket(CCharEntity* PChar, ENTITYUPDATE type, uint8 updatemask
 
             if (updatemask & UPDATE_NAME)
             {
-                memcpy(data + (0x5A), PChar->GetName(), PChar->name.size());
+                std::string name = (const char*)PChar->GetName();
+                memcpy(data + (0x5A), name.c_str(), name.size());
             }
         }
         break;
