@@ -37,6 +37,19 @@ along with this program.  If not, see http://www.gnu.org/licenses/
 
 CTargetFind::CTargetFind(CBattleEntity* PBattleEntity)
 {
+    isPlayer          = false;
+    m_scalar          = 0.f;
+    m_BPoint.x        = 0.f;
+    m_BPoint.y        = 0.f;
+    m_BPoint.z        = 0.f;
+    m_BPoint.moving   = 0;
+    m_BPoint.rotation = 0;
+    m_CPoint.x        = 0.f;
+    m_CPoint.y        = 0.f;
+    m_CPoint.z        = 0.f;
+    m_CPoint.moving   = 0;
+    m_CPoint.rotation = 0;
+
     m_PBattleEntity = PBattleEntity;
 
     reset();
@@ -149,7 +162,7 @@ void CTargetFind::findWithinArea(CBattleEntity* PTarget, AOE_RADIUS radiusType, 
             withPet = PETS_CAN_AOE_BUFF;
         }
 
-        if (m_findFlags & FINDFLAGS_HIT_ALL || (m_findType == FIND_TYPE::MONSTER_PLAYER && ((CMobEntity*)m_PBattleEntity)->CalledForHelp()))
+        if (m_findFlags & FINDFLAGS_HIT_ALL || (m_findType == FIND_TYPE::MONSTER_PLAYER && ((CMobEntity*)m_PBattleEntity)->GetCallForHelpFlag()))
         {
             addAllInZone(m_PMasterTarget, withPet);
         }
@@ -293,9 +306,9 @@ void CTargetFind::addAllInRange(CBattleEntity* PTarget, float radius, ALLEGIANCE
     m_radius        = radius;
     m_PRadiusAround = &(m_PBattleEntity->loc.p);
 
-    if (allegiance == ALLEGIANCE_TYPE::PLAYER)
+    if (PTarget && allegiance == ALLEGIANCE_TYPE::PLAYER)
     {
-        if (PTarget && PTarget->objtype == TYPE_PC)
+        if (PTarget->objtype == TYPE_PC)
         {
             CCharEntity* PChar = static_cast<CCharEntity*>(PTarget);
             for (const auto& list : { PChar->SpawnPCList, PChar->SpawnPETList })

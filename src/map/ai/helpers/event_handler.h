@@ -51,6 +51,8 @@ public:
     template <class... Args>
     void triggerListener(std::string const& eventname, Args&&... args)
     {
+        TracyZoneScoped;
+        TracyZoneString(eventname);
         if (auto eventListener = eventListeners.find(eventname); eventListener != eventListeners.end())
         {
             for (auto&& event : eventListener->second)
@@ -59,7 +61,7 @@ public:
                 if (!result.valid())
                 {
                     sol::error err = result;
-                    ShowScript("Error in listener event %s: %s", eventname, err.what());
+                    ShowError("Error in listener event %s: %s", eventname, err.what());
                 }
             }
         }

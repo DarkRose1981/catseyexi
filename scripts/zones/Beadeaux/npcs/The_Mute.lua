@@ -4,7 +4,7 @@
 -- !pos -166.230 -1 -73.685 147
 -----------------------------------
 require("scripts/globals/quests")
-require("scripts/settings/main")
+require("scripts/globals/settings")
 -----------------------------------
 local entity = {}
 
@@ -18,6 +18,7 @@ entity.onTrigger = function(player, npc)
         player:setCharVar("cCollectSilence", 1)
     end
 
+    npc:entityAnimationPacket("sils", player)
     player:addStatusEffect(xi.effect.SILENCE, 0, 0, duration)
 
 end

@@ -19,7 +19,7 @@
 ===========================================================================
 */
 
-#include "../../common/utils.h"
+#include "common/utils.h"
 
 #include <cmath>
 
@@ -218,7 +218,7 @@ namespace mobutils
      *                                                                       *
      ************************************************************************/
 
-    void CalculateStats(CMobEntity* PMob)
+    void CalculateMobStats(CMobEntity* PMob, bool recover)
     {
         // remove all to keep mods in sync
         PMob->StatusEffectContainer->KillAllStatusEffect();
@@ -231,151 +231,153 @@ namespace mobutils
         uint8     mLvl     = PMob->GetMLevel();
         ZONE_TYPE zoneType = PMob->loc.zone->GetType();
 
-        if (PMob->HPmodifier == 0)
+        if (recover == true)
         {
-            float hpScale = PMob->HPscale;
-
-            if (PMob->getMobMod(MOBMOD_HP_SCALE) != 0)
+            if (PMob->HPmodifier == 0)
             {
-                hpScale = (float)PMob->getMobMod(MOBMOD_HP_SCALE) / 100.0f;
-            }
+                float hpScale = PMob->HPscale;
 
-            float growth    = 1.06f;
-            float petGrowth = 0.75f;
-            float base      = 18.0f;
+                if (PMob->getMobMod(MOBMOD_HP_SCALE) != 0)
+                {
+                    hpScale = (float)PMob->getMobMod(MOBMOD_HP_SCALE) / 100.0f;
+                }
 
-            // give hp boost every 10 levels after 25
-            // special boosts at 25 and 50
-            if (mLvl > 75)
-            {
-                growth    = 1.28f;
-                petGrowth = 1.03f;
-            }
-            else if (mLvl > 65)
-            {
-                growth    = 1.27f;
-                petGrowth = 1.02f;
-            }
-            else if (mLvl > 55)
-            {
-                growth    = 1.25f;
-                petGrowth = 0.99f;
-            }
-            else if (mLvl > 50)
-            {
-                growth    = 1.21f;
-                petGrowth = 0.96f;
-            }
-            else if (mLvl > 45)
-            {
-                growth    = 1.17f;
-                petGrowth = 0.95f;
-            }
-            else if (mLvl > 35)
-            {
-                growth    = 1.14f;
-                petGrowth = 0.92f;
-            }
-            else if (mLvl > 25)
-            {
-                growth    = 1.1f;
-                petGrowth = 0.82f;
-            }
+                float growth    = 1.06f;
+                float petGrowth = 0.75f;
+                float base      = 18.0f;
 
-            // pets have lower health
-            if (PMob->PMaster != nullptr)
-            {
-                growth = petGrowth;
-            }
+                // give hp boost every 10 levels after 25
+                // special boosts at 25 and 50
+                if (mLvl > 75)
+                {
+                    growth    = 1.28f;
+                    petGrowth = 1.03f;
+                }
+                else if (mLvl > 65)
+                {
+                    growth    = 1.27f;
+                    petGrowth = 1.02f;
+                }
+                else if (mLvl > 55)
+                {
+                    growth    = 1.25f;
+                    petGrowth = 0.99f;
+                }
+                else if (mLvl > 50)
+                {
+                    growth    = 1.21f;
+                    petGrowth = 0.96f;
+                }
+                else if (mLvl > 45)
+                {
+                    growth    = 1.17f;
+                    petGrowth = 0.95f;
+                }
+                else if (mLvl > 35)
+                {
+                    growth    = 1.14f;
+                    petGrowth = 0.92f;
+                }
+                else if (mLvl > 25)
+                {
+                    growth    = 1.1f;
+                    petGrowth = 0.82f;
+                }
 
-            PMob->health.maxhp = (int16)(base * pow(mLvl, growth) * hpScale);
-        }
-        else
-        {
-            PMob->health.maxhp = PMob->HPmodifier;
-        }
+                // pets have lower health
+                if (PMob->PMaster != nullptr)
+                {
+                    growth = petGrowth;
+                }
 
-        if (isNM)
-        {
-            PMob->health.maxhp = (int32)(PMob->health.maxhp * map_config.nm_hp_multiplier);
-        }
-        else
-        {
-            PMob->health.maxhp = (int32)(PMob->health.maxhp * map_config.mob_hp_multiplier);
-        }
-
-        bool hasMp = false;
-
-        switch (mJob)
-        {
-            case JOB_PLD:
-            case JOB_WHM:
-            case JOB_BLM:
-            case JOB_RDM:
-            case JOB_DRK:
-            case JOB_BLU:
-            case JOB_SCH:
-            case JOB_SMN:
-                hasMp = true;
-                break;
-            default:
-                break;
-        }
-
-        switch (sJob)
-        {
-            case JOB_PLD:
-            case JOB_WHM:
-            case JOB_BLM:
-            case JOB_RDM:
-            case JOB_DRK:
-            case JOB_BLU:
-            case JOB_SCH:
-            case JOB_SMN:
-                hasMp = true;
-                break;
-            default:
-                break;
-        }
-
-        if (PMob->getMobMod(MOBMOD_MP_BASE))
-        {
-            hasMp = true;
-        }
-
-        if (hasMp)
-        {
-            float scale = PMob->MPscale;
-
-            if (PMob->getMobMod(MOBMOD_MP_BASE))
-            {
-                scale = (float)PMob->getMobMod(MOBMOD_MP_BASE) / 100.0f;
-            }
-
-            if (PMob->MPmodifier == 0)
-            {
-                PMob->health.maxmp = (int16)(18.2 * pow(mLvl, 1.1075) * scale) + 10;
+                PMob->health.maxhp = (int16)(base * pow(mLvl, growth) * hpScale);
             }
             else
             {
-                PMob->health.maxmp = PMob->MPmodifier;
+                PMob->health.maxhp = PMob->HPmodifier;
             }
 
             if (isNM)
             {
-                PMob->health.maxmp = (int32)(PMob->health.maxmp * map_config.nm_mp_multiplier);
+                PMob->health.maxhp = (int32)(PMob->health.maxhp * settings::get<float>("map.NM_HP_MULTIPLIER"));
             }
             else
             {
-                PMob->health.maxmp = (int32)(PMob->health.maxmp * map_config.mob_mp_multiplier);
+                PMob->health.maxhp = (int32)(PMob->health.maxhp * settings::get<float>("map.MOB_HP_MULTIPLIER"));
             }
+
+            bool hasMp = false;
+
+            switch (mJob)
+            {
+                case JOB_PLD:
+                case JOB_WHM:
+                case JOB_BLM:
+                case JOB_RDM:
+                case JOB_DRK:
+                case JOB_BLU:
+                case JOB_SCH:
+                case JOB_SMN:
+                    hasMp = true;
+                    break;
+                default:
+                    break;
+            }
+
+            switch (sJob)
+            {
+                case JOB_PLD:
+                case JOB_WHM:
+                case JOB_BLM:
+                case JOB_RDM:
+                case JOB_DRK:
+                case JOB_BLU:
+                case JOB_SCH:
+                case JOB_SMN:
+                    hasMp = true;
+                    break;
+                default:
+                    break;
+            }
+
+            if (PMob->getMobMod(MOBMOD_MP_BASE))
+            {
+                hasMp = true;
+            }
+
+            if (hasMp)
+            {
+                float scale = PMob->MPscale;
+
+                if (PMob->getMobMod(MOBMOD_MP_BASE))
+                {
+                    scale = (float)PMob->getMobMod(MOBMOD_MP_BASE) / 100.0f;
+                }
+
+                if (PMob->MPmodifier == 0)
+                {
+                    PMob->health.maxmp = (int16)(18.2 * pow(mLvl, 1.1075) * scale) + 10;
+                }
+                else
+                {
+                    PMob->health.maxmp = PMob->MPmodifier;
+                }
+
+                if (isNM)
+                {
+                    PMob->health.maxmp = (int32)(PMob->health.maxmp * settings::get<float>("map.NM_MP_MULTIPLIER"));
+                }
+                else
+                {
+                    PMob->health.maxmp = (int32)(PMob->health.maxmp *settings::get<float>("map.MOB_MP_MULTIPLIER"));
+                }
+            }
+
+            PMob->UpdateHealth();
+            PMob->health.tp = 0;
+            PMob->health.hp = PMob->GetMaxHP();
+            PMob->health.mp = PMob->GetMaxMP();
         }
-
-        PMob->UpdateHealth();
-
-        PMob->health.tp = 0;
-        PMob->health.hp = PMob->GetMaxHP();
-        PMob->health.mp = PMob->GetMaxMP();
 
         ((CItemWeapon*)PMob->m_Weapons[SLOT_MAIN])->setDamage(GetWeaponDamage(PMob));
 
@@ -457,26 +459,14 @@ namespace mobutils
         PMob->stats.MND = fMND + mMND + sMND;
         PMob->stats.CHR = fCHR + mCHR + sCHR;
 
-        if (isNM)
-        {
-            PMob->stats.STR = (uint16)(PMob->stats.STR * map_config.nm_stat_multiplier);
-            PMob->stats.DEX = (uint16)(PMob->stats.DEX * map_config.nm_stat_multiplier);
-            PMob->stats.VIT = (uint16)(PMob->stats.VIT * map_config.nm_stat_multiplier);
-            PMob->stats.AGI = (uint16)(PMob->stats.AGI * map_config.nm_stat_multiplier);
-            PMob->stats.INT = (uint16)(PMob->stats.INT * map_config.nm_stat_multiplier);
-            PMob->stats.MND = (uint16)(PMob->stats.MND * map_config.nm_stat_multiplier);
-            PMob->stats.CHR = (uint16)(PMob->stats.CHR * map_config.nm_stat_multiplier);
-        }
-        else
-        {
-            PMob->stats.STR = (uint16)(PMob->stats.STR * map_config.mob_stat_multiplier);
-            PMob->stats.DEX = (uint16)(PMob->stats.DEX * map_config.mob_stat_multiplier);
-            PMob->stats.VIT = (uint16)(PMob->stats.VIT * map_config.mob_stat_multiplier);
-            PMob->stats.AGI = (uint16)(PMob->stats.AGI * map_config.mob_stat_multiplier);
-            PMob->stats.INT = (uint16)(PMob->stats.INT * map_config.mob_stat_multiplier);
-            PMob->stats.MND = (uint16)(PMob->stats.MND * map_config.mob_stat_multiplier);
-            PMob->stats.CHR = (uint16)(PMob->stats.CHR * map_config.mob_stat_multiplier);
-        }
+        auto statMultiplier = isNM ? settings::get<float>("map.NM_STAT_MULTIPLIER") : settings::get<float>("map.MOB_STAT_MULTIPLIER");
+        PMob->stats.STR = (uint16)(PMob->stats.STR * statMultiplier);
+        PMob->stats.DEX = (uint16)(PMob->stats.DEX * statMultiplier);
+        PMob->stats.VIT = (uint16)(PMob->stats.VIT * statMultiplier);
+        PMob->stats.AGI = (uint16)(PMob->stats.AGI * statMultiplier);
+        PMob->stats.INT = (uint16)(PMob->stats.INT * statMultiplier);
+        PMob->stats.MND = (uint16)(PMob->stats.MND * statMultiplier);
+        PMob->stats.CHR = (uint16)(PMob->stats.CHR * statMultiplier);
 
         // special case, give spell list to my pet
         if (PMob->getMobMod(MOBMOD_PET_SPELL_LIST) && PMob->PPet != nullptr)
@@ -584,17 +574,17 @@ namespace mobutils
         // Check for possible miss-setups
         if (PMob->getMobMod(MOBMOD_SPECIAL_SKILL) != 0 && PMob->getMobMod(MOBMOD_SPECIAL_COOL) == 0)
         {
-            ShowError("Mobutils::CalculateStats Mob (%s, %d) with special skill but no cool down set!", PMob->GetName(), PMob->id);
+            ShowError("Mobutils::CalculateMobStats Mob (%s, %d) with special skill but no cool down set!", PMob->GetName(), PMob->id);
         }
 
         if (PMob->SpellContainer->HasSpells() && PMob->getMobMod(MOBMOD_MAGIC_COOL) == 0)
         {
-            ShowError("Mobutils::CalculateStats Mob (%s, %d) with magic but no cool down set!", PMob->GetName(), PMob->id);
+            ShowError("Mobutils::CalculateMobStats Mob (%s, %d) with magic but no cool down set!", PMob->GetName(), PMob->id);
         }
 
         if (PMob->m_Detects == 0)
         {
-            ShowError("Mobutils::CalculateStats Mob (%s, %d, %d) has no detection methods!", PMob->GetName(), PMob->id, PMob->m_Family);
+            ShowError("Mobutils::CalculateMobStats Mob (%s, %d, %d) has no detection methods!", PMob->GetName(), PMob->id, PMob->m_Family);
         }
     }
 
@@ -944,7 +934,7 @@ namespace mobutils
         // make sure mob has mp to cast spells
         if (PMob->health.maxmp == 0 && PMob->SpellContainer != nullptr && PMob->SpellContainer->HasMPSpells())
         {
-            ShowError("mobutils::CalculateStats Mob (%u) has no mp for casting spells!", PMob->id);
+            ShowError("mobutils::GetAvailableSpells Mob (%u) has no mp for casting spells!", PMob->id);
         }
     }
 
@@ -1278,7 +1268,9 @@ Usage:
                 PMob->m_minLevel = (uint8)sql->GetIntData(8);
                 PMob->m_maxLevel = (uint8)sql->GetIntData(9);
 
-                memcpy(&PMob->look, sql->GetData(10), 23);
+                uint16 sqlModelID[10];
+                memcpy(&sqlModelID, sql->GetData(10), 20);
+                PMob->look = look_t(sqlModelID);
 
                 PMob->SetMJob(sql->GetIntData(11));
                 PMob->SetSJob(sql->GetIntData(12));
@@ -1325,9 +1317,9 @@ Usage:
                 PMob->setModifier(Mod::LIGHT_SDT, (int16)sql->GetFloatData(44));   // Modifier 60, base 10000 stored as signed integer. Positives signify less damage.
                 PMob->setModifier(Mod::DARK_SDT, (int16)sql->GetFloatData(45));    // Modifier 61, base 10000 stored as signed integer. Positives signify less damage.
 
-                PMob->setModifier(Mod::FIRE_RES, (int16)(sql->GetIntData(46)));    // These are stored as signed integers which
-                PMob->setModifier(Mod::ICE_RES, (int16)(sql->GetIntData(47)));     // is directly the modifier starting value.
-                PMob->setModifier(Mod::WIND_RES, (int16)(sql->GetIntData(48)));    // Positives signify increased resist chance.
+                PMob->setModifier(Mod::FIRE_RES, (int16)(sql->GetIntData(46))); // These are stored as signed integers which
+                PMob->setModifier(Mod::ICE_RES, (int16)(sql->GetIntData(47)));  // is directly the modifier starting value.
+                PMob->setModifier(Mod::WIND_RES, (int16)(sql->GetIntData(48))); // Positives signify increased resist chance.
                 PMob->setModifier(Mod::EARTH_RES, (int16)(sql->GetIntData(49)));
                 PMob->setModifier(Mod::THUNDER_RES, (int16)(sql->GetIntData(50)));
                 PMob->setModifier(Mod::WATER_RES, (int16)(sql->GetIntData(51)));
@@ -1340,8 +1332,8 @@ Usage:
                 PMob->m_flags       = (uint32)sql->GetIntData(57);
 
                 // Special sub animation for Mob (yovra, jailer of love, phuabo)
-                // yovra 1: en hauteur, 2: en bas, 3: en haut
-                // phuabo 1: sous l'eau, 2: sort de l'eau, 3: rentre dans l'eau
+                // yovra 1: On top/in the sky, 2: , 3: On top/in the sky
+                // phuabo 1: Underwater, 2: Out of the water, 3: Goes back underwater
                 PMob->animationsub = (uint32)sql->GetIntData(58);
 
                 // Setup HP / MP Stat Percentage Boost
@@ -1350,7 +1342,7 @@ Usage:
 
                 // TODO: Remove me
                 // Check if we should be looking up scripts for this mob
-                //PMob->m_HasSpellScript = (uint8)sql->GetIntData(61);
+                // PMob->m_HasSpellScript = (uint8)sql->GetIntData(61);
 
                 PMob->m_SpellListContainer = mobSpellList::GetMobSpellList(sql->GetIntData(62));
 
@@ -1423,7 +1415,9 @@ Usage:
                 PMob->m_minLevel = (uint8)sql->GetIntData(8);
                 PMob->m_maxLevel = (uint8)sql->GetIntData(9);
 
-                memcpy(&PMob->look, sql->GetData(10), 23);
+                uint16 sqlModelID[10];
+                memcpy(&sqlModelID, sql->GetData(10), 20);
+                PMob->look = look_t(sqlModelID);
 
                 PMob->SetMJob(sql->GetIntData(11));
                 PMob->SetSJob(sql->GetIntData(12));
@@ -1470,9 +1464,9 @@ Usage:
                 PMob->setModifier(Mod::LIGHT_SDT, (int16)sql->GetFloatData(44));   // Modifier 60, base 10000 stored as signed integer. Positives signify less damage.
                 PMob->setModifier(Mod::DARK_SDT, (int16)sql->GetFloatData(45));    // Modifier 61, base 10000 stored as signed integer. Positives signify less damage.
 
-                PMob->setModifier(Mod::FIRE_RES, (int16)(sql->GetIntData(46)));    // These are stored as signed integers which
-                PMob->setModifier(Mod::ICE_RES, (int16)(sql->GetIntData(47)));     // is directly the modifier starting value.
-                PMob->setModifier(Mod::WIND_RES, (int16)(sql->GetIntData(48)));    // Positives signify increased resist chance.
+                PMob->setModifier(Mod::FIRE_RES, (int16)(sql->GetIntData(46))); // These are stored as signed integers which
+                PMob->setModifier(Mod::ICE_RES, (int16)(sql->GetIntData(47)));  // is directly the modifier starting value.
+                PMob->setModifier(Mod::WIND_RES, (int16)(sql->GetIntData(48))); // Positives signify increased resist chance.
                 PMob->setModifier(Mod::EARTH_RES, (int16)(sql->GetIntData(49)));
                 PMob->setModifier(Mod::THUNDER_RES, (int16)(sql->GetIntData(50)));
                 PMob->setModifier(Mod::WATER_RES, (int16)(sql->GetIntData(51)));
@@ -1491,7 +1485,7 @@ Usage:
                 PMob->MPscale = sql->GetFloatData(60);
 
                 // TODO: Remove me
-                //PMob->m_HasSpellScript = (uint8)sql->GetIntData(61);
+                // PMob->m_HasSpellScript = (uint8)sql->GetIntData(61);
 
                 PMob->m_SpellListContainer = mobSpellList::GetMobSpellList(sql->GetIntData(62));
 
@@ -1506,17 +1500,6 @@ Usage:
 
                 // must be here first to define mobmods
                 mobutils::InitializeMob(PMob, zoneutils::GetZone(targetZoneId));
-
-                zoneutils::GetZone(targetZoneId)->InsertMOB(PMob);
-
-                luautils::OnEntityLoad(PMob);
-
-                luautils::OnMobInitialize(PMob);
-                luautils::ApplyMixins(PMob);
-                luautils::ApplyZoneMixins(PMob);
-
-                PMob->saveModifiers();
-                PMob->saveMobModifiers();
             }
         }
         return PMob;

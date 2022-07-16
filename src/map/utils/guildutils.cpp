@@ -35,26 +35,26 @@
 //#define количество обновляемых предметов при restock (в процентах от максимального количества)
 
 /************************************************************************
- *																		*
- *  Список гильдий														*
- *																		*
+ *                                                                      *
+ *  Список гильдий                                                      *
+ *                                                                      *
  ************************************************************************/
 
 std::vector<CGuild*>         g_PGuildList;
 std::vector<CItemContainer*> g_PGuildShopList;
 
 /************************************************************************
- *																		*
- *																		*
- *																		*
+ *                                                                      *
+ *                                                                      *
+ *                                                                      *
  ************************************************************************/
 
 namespace guildutils
 {
     /************************************************************************
-     *																		*
-     *  Инициализация гильдий												*
-     *																		*
+     *                                                                      *
+     *  Инициализация гильдий                                               *
+     *                                                                      *
      ************************************************************************/
 
     void Initialize()
@@ -62,7 +62,7 @@ namespace guildutils
         const char* fmtQuery = "SELECT DISTINCT id, points_name FROM guilds ORDER BY id ASC;";
         if (sql->Query(fmtQuery) != SQL_ERROR && sql->NumRows() != 0)
         {
-            g_PGuildList.reserve((const unsigned int)sql->NumRows());
+            g_PGuildList.reserve((unsigned int)sql->NumRows());
 
             while (sql->NextRow() == SQL_SUCCESS)
             {
@@ -75,7 +75,7 @@ namespace guildutils
 
         if (sql->Query(fmtQuery) != SQL_ERROR && sql->NumRows() != 0)
         {
-            g_PGuildShopList.reserve((const unsigned int)sql->NumRows());
+            g_PGuildShopList.reserve((unsigned int)sql->NumRows());
 
             while (sql->NextRow() == SQL_SUCCESS)
             {
@@ -85,8 +85,8 @@ namespace guildutils
         for (auto* PGuildShop : g_PGuildShopList)
         {
             fmtQuery = "SELECT itemid, min_price, max_price, max_quantity, daily_increase, initial_quantity \
-				    FROM guild_shops \
-					WHERE guildid = %u \
+                    FROM guild_shops \
+                    WHERE guildid = %u \
                     LIMIT %u";
 
             int32 ret = sql->Query(fmtQuery, PGuildShop->GetID(), MAX_CONTAINER_SIZE);
@@ -168,12 +168,12 @@ namespace guildutils
         {
             // write the new pattern and update time to prevent other servers from updating the pattern
             sql->Query("REPLACE INTO server_variables (name,value) VALUES('[GUILD]pattern_update', %u), ('[GUILD]pattern', %u);",
-                      CVanaTime::getInstance()->getJstYearDay(), pattern);
+                       CVanaTime::getInstance()->getJstYearDay(), pattern);
             sql->Query("DELETE FROM char_vars WHERE varname = '[GUILD]daily_points';");
         }
 
         // load the pattern in case it was set by another server (and this server did not set it)
-        sql->Query("SELECT value FROM server_variables WHERE name = '[GUILD]pattern';");
+        ret = sql->Query("SELECT value FROM server_variables WHERE name = '[GUILD]pattern';");
         if (ret != SQL_ERROR && sql->NumRows() == 1 && sql->NextRow() == SQL_SUCCESS)
         {
             pattern = sql->GetUIntData(0);
@@ -188,9 +188,9 @@ namespace guildutils
     }
 
     /************************************************************************
-     *																		*
-     *  Получаем указатель на магазин гильдии с указанным ID					*
-     *																		*
+     *                                                                      *
+     *  Получаем указатель на магазин гильдии с указанным ID                    *
+     *                                                                      *
      ************************************************************************/
 
     CItemContainer* GetGuildShop(uint16 GuildShopID)

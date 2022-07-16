@@ -51,7 +51,8 @@
  ************************************************************************/
 
 CLinkshell::CLinkshell(uint32 id)
-: m_id(id)
+: m_postRights(0)
+, m_id(id)
 , m_color(0)
 {
 }
@@ -93,7 +94,7 @@ void CLinkshell::setMessage(const int8* message, const int8* poster)
     char sqlMessage[256];
     sql->EscapeString(sqlMessage, (const char*)message);
     sql->Query("UPDATE linkshells SET poster = '%s', message = '%s', messagetime = %u WHERE linkshellid = %d;", poster, sqlMessage,
-              static_cast<uint32>(time(nullptr)), m_id);
+               static_cast<uint32>(time(nullptr)), m_id);
 
     int8 packetData[8]{};
     ref<uint32>(packetData, 0) = m_id;
@@ -157,7 +158,7 @@ bool CLinkshell::DelMember(CCharEntity* PChar)
 
 /************************************************************************
  *                                                                       *
- *  Promotes or demotes the target member		(linkshell)				*
+ *  Promotes or demotes the target member       (linkshell)             *
  *                                                                       *
  ************************************************************************/
 
@@ -173,7 +174,7 @@ void CLinkshell::ChangeMemberRank(int8* MemberName, uint8 toSack)
         {
             if (strcmp((const char*)MemberName, (const char*)member->GetName()) == 0)
             {
-                CCharEntity* PMember = (CCharEntity*)member;
+                CCharEntity* PMember = member;
 
                 SLOTTYPE slot = SLOT_LINK1;
                 int      lsID = 1;
@@ -209,12 +210,12 @@ void CLinkshell::ChangeMemberRank(int8* MemberName, uint8 toSack)
                     if (lsID == 1)
                     {
                         sql->Query("UPDATE accounts_sessions SET linkshellid1 = %u , linkshellrank1 = %u WHERE charid = %u", m_id,
-                                  static_cast<uint8>(PItemLinkshell->GetLSType()), PMember->id);
+                                   static_cast<uint8>(PItemLinkshell->GetLSType()), PMember->id);
                     }
                     else if (lsID == 2)
                     {
                         sql->Query("UPDATE accounts_sessions SET linkshellid2 = %u , linkshellrank2 = %u WHERE charid = %u", m_id,
-                                  static_cast<uint8>(PItemLinkshell->GetLSType()), PMember->id);
+                                   static_cast<uint8>(PItemLinkshell->GetLSType()), PMember->id);
                     }
 
                     PMember->pushPacket(new CInventoryAssignPacket(PItemLinkshell, INV_NORMAL));
@@ -247,7 +248,7 @@ void CLinkshell::RemoveMemberByName(int8* MemberName, uint8 kickerRank, bool bre
     {
         if (strcmp((const char*)MemberName, (const char*)member->GetName()) == 0)
         {
-            CCharEntity* PMember = (CCharEntity*)member;
+            CCharEntity* PMember = member;
 
             CItemLinkshell* PItemLinkshell = (CItemLinkshell*)PMember->getEquip(SLOT_LINK1);
             SLOTTYPE        slot           = SLOT_LINK1;
@@ -329,7 +330,7 @@ void CLinkshell::RemoveMemberByName(int8* MemberName, uint8 kickerRank, bool bre
 void CLinkshell::BreakLinkshell(int8* lsname, bool gm)
 {
     uint32 lsid = m_id;
-    int8   signature[21];
+    int8   signature[DecodeStringLength];
     DecodeStringLinkshell(lsname, signature);
 
     // break logged in and equipped members
@@ -407,7 +408,10 @@ namespace linkshell
             auto PLinkshell = std::make_unique<CLinkshell>(sql->GetUIntData(0));
 
             PLinkshell->setColor(sql->GetIntData(1));
-            int8 EncodedName[16];
+            int8 EncodedName[LinkshellStringLength];
+
+            memset(&EncodedName, 0, sizeof(EncodedName));
+
             EncodeStringLinkshell(sql->GetData(2), EncodedName);
             PLinkshell->setName(EncodedName);
             if (sql->GetUIntData(3) < LSTYPE_LINKSHELL || sql->GetUIntData(3) > LSTYPE_LINKPEARL)
@@ -516,7 +520,7 @@ namespace linkshell
         if (IsValidLinkshellName(name))
         {
             if (sql->Query("INSERT INTO linkshells (name, color, postrights) VALUES ('%s', %u, %u)", name, color,
-                          static_cast<uint8>(LSTYPE_PEARLSACK)) != SQL_ERROR)
+                           static_cast<uint8>(LSTYPE_PEARLSACK)) != SQL_ERROR)
             {
                 return LoadLinkshell((uint32)sql->LastInsertId())->getID();
             }

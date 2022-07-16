@@ -32,8 +32,8 @@ along with this program.  If not, see http://www.gnu.org/licenses/
 
 CInstance::CInstance(CZone* zone, uint16 instanceid)
 : CZoneEntities(zone)
-, m_zone(zone)
 , m_instanceid(instanceid)
+, m_zone(zone)
 {
     LoadInstance();
 
@@ -125,7 +125,7 @@ void CInstance::LoadInstance()
     }
     else
     {
-        ShowFatalError("CZone::LoadInstance: Cannot load instance %u", m_instanceid);
+        ShowCritical("CZone::LoadInstance: Cannot load instance %u", m_instanceid);
         Fail();
     }
 }
@@ -254,7 +254,8 @@ bool CInstance::CharRegistered(CCharEntity* PChar)
 
 void CInstance::ClearEntities()
 {
-    auto clearStates = [](auto& entity) {
+    auto clearStates = [](auto& entity)
+    {
         if (static_cast<CBattleEntity*>(entity.second)->isAlive())
         {
             entity.second->PAI->ClearStateStack();

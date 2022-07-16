@@ -321,7 +321,7 @@ namespace gambits
                         auto spell_id = POwner->SpellContainer->GetAvailable(static_cast<SpellID>(action.select_arg));
                         if (spell_id.has_value())
                         {
-                            controller->Cast(target->targid, static_cast<SpellID>(spell_id.value()));
+                            controller->Cast(target->targid, spell_id.value());
                         }
                     }
                     else if (action.select == G_SELECT::HIGHEST)
@@ -329,7 +329,7 @@ namespace gambits
                         auto spell_id = POwner->SpellContainer->GetBestAvailable(static_cast<SPELLFAMILY>(action.select_arg));
                         if (spell_id.has_value())
                         {
-                            controller->Cast(target->targid, static_cast<SpellID>(spell_id.value()));
+                            controller->Cast(target->targid, spell_id.value());
                         }
                     }
                     else if (action.select == G_SELECT::LOWEST)
@@ -341,12 +341,47 @@ namespace gambits
                         //    controller->Cast(target->targid, static_cast<SpellID>(spell_id.value()));
                         //}
                     }
+                    else if (action.select == G_SELECT::BEST_INDI)
+                    {
+                        auto* PMaster = static_cast<CCharEntity*>(POwner->PMaster);
+                        auto spell_id = POwner->SpellContainer->GetBestIndiSpell(PMaster);
+                        if (spell_id.has_value())
+                        {
+                            controller->Cast(target->targid, spell_id.value());
+                        }
+                    }
+                    else if (action.select == G_SELECT::ENTRUSTED)
+                    {
+                        auto* PMaster = static_cast<CCharEntity*>(POwner->PMaster);
+                        auto spell_id = POwner->SpellContainer->GetBestEntrustedSpell(PMaster);
+                        target = PMaster;
+                        if (spell_id.has_value())
+                        {
+                            controller->Cast(target->targid, spell_id.value());
+                        }
+                    }
                     else if (action.select == G_SELECT::BEST_AGAINST_TARGET)
                     {
                         auto spell_id = POwner->SpellContainer->GetBestAgainstTargetWeakness(target);
                         if (spell_id.has_value())
                         {
-                            controller->Cast(target->targid, static_cast<SpellID>(spell_id.value()));
+                            controller->Cast(target->targid, spell_id.value());
+                        }
+                    }
+                    else if (action.select == G_SELECT::STORM_DAY)
+                    {
+                        auto spell_id = POwner->SpellContainer->GetStormDay();
+                        if (spell_id.has_value())
+                        {
+                            controller->Cast(target->targid, spell_id.value());
+                        }
+                    }
+                    else if (action.select == G_SELECT::HELIX_DAY)
+                    {
+                        auto spell_id = POwner->SpellContainer->GetHelixDay();
+                        if (spell_id.has_value())
+                        {
+                            controller->Cast(target->targid, spell_id.value());
                         }
                     }
                     else if (action.select == G_SELECT::RANDOM)
@@ -354,7 +389,7 @@ namespace gambits
                         auto spell_id = POwner->SpellContainer->GetSpell();
                         if (spell_id.has_value())
                         {
-                            controller->Cast(target->targid, static_cast<SpellID>(spell_id.value()));
+                            controller->Cast(target->targid, spell_id.value());
                         }
                     }
                     else if (action.select == G_SELECT::MB_ELEMENT)
@@ -391,7 +426,7 @@ namespace gambits
 
                         if (spell_id.has_value())
                         {
-                            controller->Cast(target->targid, static_cast<SpellID>(spell_id.value()));
+                            controller->Cast(target->targid, spell_id.value());
                         }
                     }
                 }
@@ -402,7 +437,7 @@ namespace gambits
 
                     if (action.select == G_SELECT::HIGHEST_WALTZ)
                     {
-                        bool canWaltz = false;
+                        // bool canWaltz = false;
                         auto currentTP = POwner->health.tp;
 
                         ABILITY wlist[5] =
@@ -417,7 +452,7 @@ namespace gambits
                         for (ABILITY const& waltz : wlist)
                         {
                             auto waltzLevel  = ability::GetAbility(waltz)->getLevel();
-                            auto abilityName = ability::GetAbility(waltz)->getName();
+                            // auto abilityName = ability::GetAbility(waltz)->getName();
                             uint16 tpCost    = 0;
 
                             if (mLevel >= waltzLevel)
@@ -585,12 +620,40 @@ namespace gambits
             case G_CONDITION::NO_SAMBA:
             {
                 bool noSamba = true;
-                if (trigger_target->StatusEffectContainer->HasStatusEffect(static_cast<EFFECT>(EFFECT_DRAIN_SAMBA)) ||
-                    trigger_target->StatusEffectContainer->HasStatusEffect(static_cast<EFFECT>(EFFECT_HASTE_SAMBA)))
+                if (trigger_target->StatusEffectContainer->HasStatusEffect(EFFECT_DRAIN_SAMBA) ||
+                    trigger_target->StatusEffectContainer->HasStatusEffect(EFFECT_HASTE_SAMBA))
                 {
                     noSamba = false;
                 }
                 return noSamba;
+                break;
+            }
+            case G_CONDITION::NO_STORM:
+            {
+                bool noStorm = true;
+                if (trigger_target->StatusEffectContainer->HasStatusEffect(
+                {
+                    EFFECT_FIRESTORM,
+                    EFFECT_HAILSTORM,
+                    EFFECT_WINDSTORM,
+                    EFFECT_SANDSTORM,
+                    EFFECT_THUNDERSTORM,
+                    EFFECT_RAINSTORM,
+                    EFFECT_AURORASTORM,
+                    EFFECT_VOIDSTORM,
+                    EFFECT_FIRESTORM_II,
+                    EFFECT_HAILSTORM_II,
+                    EFFECT_WINDSTORM_II,
+                    EFFECT_SANDSTORM_II,
+                    EFFECT_THUNDERSTORM_II,
+                    EFFECT_RAINSTORM_II,
+                    EFFECT_AURORASTORM_II,
+                    EFFECT_VOIDSTORM_II,
+                }))
+                {
+                    noStorm = false;
+                }
+                return noStorm;
                 break;
             }
             case G_CONDITION::STATUS_FLAG:
@@ -807,7 +870,7 @@ namespace gambits
             if (chosen_skill->skill_type == G_REACTION::WS)
             {
                 CWeaponSkill* PWeaponSkill = battleutils::GetWeaponSkill(chosen_skill->skill_id);
-                if (chosen_skill->valid_targets == TARGET_SELF)
+                if (chosen_skill->valid_targets & TARGET_SELF)
                 {
                     target = POwner;
                 }
@@ -819,8 +882,8 @@ namespace gambits
             }
             else // Mobskill
             {
-                CMobSkill* PMobSkill = battleutils::GetMobSkill(chosen_skill->skill_id);
-                if (chosen_skill->valid_targets == TARGET_SELF || chosen_skill->valid_targets == TARGET_PLAYER_PARTY)
+                // CMobSkill* PMobSkill = battleutils::GetMobSkill(chosen_skill->skill_id);
+                if (chosen_skill->valid_targets & TARGET_SELF || chosen_skill->valid_targets & TARGET_PLAYER_PARTY)
                 {
                     target = POwner;
                 }

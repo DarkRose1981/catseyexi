@@ -31,6 +31,7 @@ CTaskMgr* CTaskMgr::_instance = nullptr;
 
 CTaskMgr* CTaskMgr::getInstance()
 {
+    TracyZoneScoped;
     if (_instance == nullptr)
     {
         _instance = new CTaskMgr();
@@ -62,13 +63,14 @@ CTaskMgr::CTask* CTaskMgr::AddTask(CTask* PTask)
 
 void CTaskMgr::RemoveTask(const std::string& TaskName)
 {
+    TracyZoneScoped;
     // m_TaskList is a priority_queue, so we can't directly pull members out of it.
     //
     // Tasks are compared using their m_tick values, so we can safely remove all the tasks
     // and re-insert them, sans the one we're trying to remove.
 
     std::size_t tasksRemoved = 0;
-    TaskList_t newPq;
+    TaskList_t  newPq;
     while (!m_TaskList.empty())
     {
         CTask* PTask = m_TaskList.top();
@@ -101,10 +103,10 @@ duration CTaskMgr::DoTimer(time_point tick)
 
     while (!m_TaskList.empty())
     {
-        TracyZoneScoped;
         CTask* PTask = m_TaskList.top();
-        diff         = PTask->m_tick - tick;
+        TracyZoneString(PTask->m_name);
 
+        diff = PTask->m_tick - tick;
         if (diff > 0s)
         {
             break; // no more expired timers to process

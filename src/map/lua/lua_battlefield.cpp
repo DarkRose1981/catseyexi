@@ -19,13 +19,13 @@ along with this program.  If not, see http://www.gnu.org/licenses/
 ===========================================================================
 */
 
-#include "../../common/logging.h"
-#include "../../common/timer.h"
+#include "common/logging.h"
+#include "common/timer.h"
 
 #include "../battlefield.h"
 #include "../entities/charentity.h"
-#include "../entities/npcentity.h"
 #include "../entities/mobentity.h"
+#include "../entities/npcentity.h"
 #include "../status_effect_container.h"
 #include "../utils/mobutils.h"
 #include "../utils/zoneutils.h"
@@ -83,32 +83,43 @@ uint32 CLuaBattlefield::getFightTime()
 
 sol::table CLuaBattlefield::getPlayers()
 {
-    auto table = luautils::lua.create_table();
-    m_PLuaBattlefield->ForEachPlayer([&](CCharEntity* PChar) {
+    auto table = lua.create_table();
+    // clang-format off
+    m_PLuaBattlefield->ForEachPlayer([&](CCharEntity* PChar)
+    {
         if (PChar)
         {
             table.add(CLuaBaseEntity(PChar));
         }
     });
+    // clang-format on
     return table;
 }
 
 sol::table CLuaBattlefield::getMobs(bool required, bool adds)
 {
-    auto table = luautils::lua.create_table();
+    auto table = lua.create_table();
 
     if (required && !m_PLuaBattlefield->m_RequiredEnemyList.empty())
     {
-        m_PLuaBattlefield->ForEachRequiredEnemy([&](CMobEntity* PMob) {
+        // clang-format off
+        m_PLuaBattlefield->ForEachRequiredEnemy(
+        [&](CMobEntity* PMob)
+        {
             table.add(CLuaBaseEntity(PMob));
         });
+        // clang-format on
     }
 
     if (adds && !m_PLuaBattlefield->m_AdditionalEnemyList.empty())
     {
-        m_PLuaBattlefield->ForEachAdditionalEnemy([&](CMobEntity* PMob) {
+        // clang-format off
+        m_PLuaBattlefield->ForEachAdditionalEnemy(
+        [&](CMobEntity* PMob)
+        {
             table.add(CLuaBaseEntity(PMob));
         });
+        // clang-format on
     }
 
     return table;
@@ -116,19 +127,27 @@ sol::table CLuaBattlefield::getMobs(bool required, bool adds)
 
 sol::table CLuaBattlefield::getNPCs()
 {
-    auto table = luautils::lua.create_table();
-    m_PLuaBattlefield->ForEachNpc([&](CNpcEntity* PNpc) {
+    auto table = lua.create_table();
+    // clang-format off
+    m_PLuaBattlefield->ForEachNpc(
+    [&](CNpcEntity* PNpc)
+    {
         table.add(CLuaBaseEntity(PNpc));
     });
+    // clang-format on
     return table;
 }
 
 sol::table CLuaBattlefield::getAllies()
 {
-    auto table = luautils::lua.create_table();
-    m_PLuaBattlefield->ForEachAlly([&](CMobEntity* PAlly) {
+    auto table = lua.create_table();
+    // clang-format off
+    m_PLuaBattlefield->ForEachAlly(
+    [&](CMobEntity* PAlly)
+    {
         table.add(CLuaBaseEntity(PAlly));
     });
+    // clang-format on
     return table;
 }
 
@@ -138,7 +157,7 @@ std::tuple<std::string, uint32, uint32> CLuaBattlefield::getRecord()
 
     auto   name = record.name;
     uint32 time = std::chrono::duration_cast<std::chrono::seconds>(record.time).count();
-    uint32 size = record.partySize;
+    uint32 size = static_cast<uint32>(record.partySize);
 
     return std::make_tuple(name, time, size);
 }
@@ -148,7 +167,7 @@ uint8 CLuaBattlefield::getStatus()
     return m_PLuaBattlefield->GetStatus();
 }
 
-uint64_t CLuaBattlefield::getLocalVar(std::string name)
+uint64_t CLuaBattlefield::getLocalVar(std::string const& name)
 {
     return m_PLuaBattlefield->GetLocalVar(name);
 }
@@ -165,7 +184,7 @@ std::pair<uint32, std::string> CLuaBattlefield::getInitiator()
     return std::make_pair(initiator.id, initiator.name);
 }
 
-void CLuaBattlefield::setLocalVar(std::string name, uint64_t value)
+void CLuaBattlefield::setLocalVar(std::string const& name, uint64_t value)
 {
     m_PLuaBattlefield->SetLocalVar(name, value);
 }
@@ -185,7 +204,7 @@ void CLuaBattlefield::setWipeTime(uint32 seconds)
     m_PLuaBattlefield->SetWipeTime(get_server_start_time() + std::chrono::seconds(seconds));
 }
 
-void CLuaBattlefield::setRecord(std::string name, uint32 seconds)
+void CLuaBattlefield::setRecord(std::string const& name, uint32 seconds)
 {
     m_PLuaBattlefield->SetRecord(name, std::chrono::seconds(seconds), m_PLuaBattlefield->GetPlayerCount());
 }
